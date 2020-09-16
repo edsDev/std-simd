@@ -432,18 +432,18 @@ struct _CommonImplX86 : _CommonImplBuiltin
   template <typename _From, typename _To, size_t _ToSize>
   static constexpr bool _S_converts_via_decomposition()
   {
-    if constexpr (is_integral_v<
-		    _From> && is_integral_v<_To> && sizeof(_From) == 8
+    if constexpr (__int_or_enum<
+		    _From> && __int_or_enum<_To> && sizeof(_From) == 8
 		  && _ToSize == 16)
       return (sizeof(_To) == 2 && !__have_ssse3)
 	     || (sizeof(_To) == 1 && !__have_avx512f);
-    else if constexpr (is_floating_point_v<_From> && is_integral_v<_To>)
+    else if constexpr (is_floating_point_v<_From> && __int_or_enum<_To>)
       return ((sizeof(_From) == 4 || sizeof(_From) == 8) && sizeof(_To) == 8
 	      && !__have_avx512dq)
 	     || (sizeof(_From) == 8 && sizeof(_To) == 4 && !__have_sse4_1
 		 && _ToSize == 16);
     else if constexpr (
-      is_integral_v<_From> && is_floating_point_v<_To> && sizeof(_From) == 8
+      __int_or_enum<_From> && is_floating_point_v<_To> && sizeof(_From) == 8
       && !__have_avx512dq)
       return (sizeof(_To) == 4 && _ToSize == 16)
 	     || (sizeof(_To) == 8 && _ToSize < 64);
@@ -839,9 +839,9 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
     static_assert(_Np == _S_size<_Tp>);
     if constexpr (std::is_same_v<_Tp, _Up> || // no conversion
 		  (sizeof(_Tp) == sizeof(_Up)
-		   && std::is_integral_v<
-			_Tp> == std::is_integral_v<_Up>) // conversion via bit
-							 // reinterpretation
+		   && __int_or_enum<
+			_Tp> == __int_or_enum<_Up>) // conversion via bit
+						    // reinterpretation
     )
       {
 	[[maybe_unused]] const auto __intrin = __to_intrin(__merge);
@@ -878,7 +878,7 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	      __assert_unreachable<_Tp>();
 	  }
 	else if constexpr ((__is_avx512_abi<_Abi>() || __have_avx512vl)
-			   && sizeof(_Tp) == 4 && std::is_integral_v<_Up>)
+			   && sizeof(_Tp) == 4 && __int_or_enum<_Up>)
 	  {
 	    const auto __kk = _MaskImpl::_S_to_bits(__k)._M_to_bits();
 	    if constexpr (sizeof(__intrin) == 16)
@@ -910,7 +910,7 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	      __assert_unreachable<_Tp>();
 	  }
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 4
-			   && std::is_integral_v<_Up>)
+			   && __int_or_enum<_Up>)
 	  {
 	    static_assert(sizeof(__intrin) == 16 || sizeof(__intrin) == 32);
 	    __merge
@@ -929,7 +929,7 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 				     __to_intrin(__k))));
 	  }
 	else if constexpr ((__is_avx512_abi<_Abi>() || __have_avx512vl)
-			   && sizeof(_Tp) == 8 && std::is_integral_v<_Up>)
+			   && sizeof(_Tp) == 8 && __int_or_enum<_Up>)
 	  {
 	    const auto __kk = _MaskImpl::_S_to_bits(__k)._M_to_bits();
 	    if constexpr (sizeof(__intrin) == 16)
@@ -961,7 +961,7 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	      __assert_unreachable<_Tp>();
 	  }
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 8
-			   && std::is_integral_v<_Up>)
+			   && __int_or_enum<_Up>)
 	  {
 	    static_assert(sizeof(__intrin) == 16 || sizeof(__intrin) == 32);
 	    __merge
@@ -1029,14 +1029,14 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	  _mm512_mask_storeu_epi16(__mem, __k, __vi);
 	else if constexpr (__have_avx512f && sizeof(_Tp) == 4)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm512_mask_storeu_epi32(__mem, __k, __vi);
 	    else
 	      _mm512_mask_storeu_ps(__mem, __k, __vi);
 	  }
 	else if constexpr (__have_avx512f && sizeof(_Tp) == 8)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm512_mask_storeu_epi64(__mem, __k, __vi);
 	    else
 	      _mm512_mask_storeu_pd(__mem, __k, __vi);
@@ -1077,14 +1077,14 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	  _mm256_mask_storeu_epi16(__mem, __k, __vi);
 	else if constexpr (__have_avx512vl && sizeof(_Tp) == 4)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm256_mask_storeu_epi32(__mem, __k, __vi);
 	    else
 	      _mm256_mask_storeu_ps(__mem, __k, __vi);
 	  }
 	else if constexpr (__have_avx512vl && sizeof(_Tp) == 8)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm256_mask_storeu_epi64(__mem, __k, __vi);
 	    else
 	      _mm256_mask_storeu_pd(__mem, __k, __vi);
@@ -1112,14 +1112,14 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	  _mm_mask_storeu_epi16(__mem, __k, __vi);
 	else if constexpr (__have_avx512vl && sizeof(_Tp) == 4)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm_mask_storeu_epi32(__mem, __k, __vi);
 	    else
 	      _mm_mask_storeu_ps(__mem, __k, __vi);
 	  }
 	else if constexpr (__have_avx512vl && sizeof(_Tp) == 8)
 	  {
-	    if constexpr (std::is_integral_v<_Tp>)
+	    if constexpr (__int_or_enum<_Tp>)
 	      _mm_mask_storeu_epi64(__mem, __k, __vi);
 	    else
 	      _mm_mask_storeu_pd(__mem, __k, __vi);
@@ -1159,13 +1159,13 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	else if constexpr (__have_avx512bw_vl && sizeof(_Tp) == 2)
 	  _mm_mask_storeu_epi16(__mem, _mm_movepi16_mask(__ki), __vi);
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 4
-			   && std::is_integral_v<_Tp>)
+			   && __int_or_enum<_Tp>)
 	  _mm_maskstore_epi32(reinterpret_cast<int*>(__mem), __ki, __vi);
 	else if constexpr (__have_avx && sizeof(_Tp) == 4)
 	  _mm_maskstore_ps(reinterpret_cast<float*>(__mem), __ki,
 			   __vector_bitcast<float>(__vi));
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 8
-			   && std::is_integral_v<_Tp>)
+			   && __int_or_enum<_Tp>)
 	  _mm_maskstore_epi64(reinterpret_cast<_LLong*>(__mem), __ki, __vi);
 	else if constexpr (__have_avx && sizeof(_Tp) == 8)
 	  _mm_maskstore_pd(reinterpret_cast<double*>(__mem), __ki,
@@ -1184,13 +1184,13 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
 	else if constexpr (__have_avx512bw_vl && sizeof(_Tp) == 2)
 	  _mm256_mask_storeu_epi16(__mem, _mm256_movepi16_mask(__ki), __vi);
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 4
-			   && std::is_integral_v<_Tp>)
+			   && __int_or_enum<_Tp>)
 	  _mm256_maskstore_epi32(reinterpret_cast<int*>(__mem), __ki, __vi);
 	else if constexpr (sizeof(_Tp) == 4)
 	  _mm256_maskstore_ps(reinterpret_cast<float*>(__mem), __ki,
 			      __vector_bitcast<float>(__v));
 	else if constexpr (__have_avx2 && sizeof(_Tp) == 8
-			   && std::is_integral_v<_Tp>)
+			   && __int_or_enum<_Tp>)
 	  _mm256_maskstore_epi64(reinterpret_cast<_LLong*>(__mem), __ki, __vi);
 	else if constexpr (__have_avx && sizeof(_Tp) == 8)
 	  _mm256_maskstore_pd(reinterpret_cast<double*>(__mem), __ki,
@@ -1214,8 +1214,8 @@ template <typename _Abi> struct _SimdImplX86 : _SimdImplBuiltin<_Abi>
   _S_masked_store(const _SimdWrapper<_Tp, _Np> __v, _Up* __mem,
 		  const _MaskMember<_Tp> __k) noexcept
   {
-    if constexpr (std::is_integral_v<
-		    _Tp> && std::is_integral_v<_Up> && sizeof(_Tp) > sizeof(_Up)
+    if constexpr (__int_or_enum<
+		    _Tp> && __int_or_enum<_Up> && sizeof(_Tp) > sizeof(_Up)
 		  && __have_avx512f && (sizeof(_Tp) >= 4 || __have_avx512bw)
 		  && (sizeof(__v) == 64 || __have_avx512vl))
       { // truncating store
@@ -4937,7 +4937,7 @@ struct _MaskImplX86 : _MaskImplX86Mixin, _MaskImplBuiltin<_Abi>
 	  {
 	    int __bits = __movemask(__to_intrin(__vector_bitcast<_Tp>(__kk)));
 	    const int __count = __builtin_popcount(__bits);
-	    return std::is_integral_v<_Tp> ? __count / sizeof(_Tp) : __count;
+	    return __int_or_enum<_Tp> ? __count / sizeof(_Tp) : __count;
 	  }
 	else if constexpr (_Np == 2 && sizeof(_Tp) == 8)
 	  {
